@@ -72,25 +72,28 @@ module.exports = {
 
     updateContent: async (req, res) => {
         try {
-            const uploadFile = res.locals.data;
+
+            let uploadFile = undefined;
+            if(res.locals) uploadFile = res.locals.data;
 
             const originalContent = await prisma.contents.findUnique({
                 where: {
                     id: parseInt(req.params.contentId)
                 }
             })
+
+            if(!originalContent) {
+                return res.status(404).json({
+                    message: "Not Found"
+                })
+            }
             
             const updatedContent = await prisma.contents.update({
                 data: {
                     title: req.body.title,
                     caption: req.body.caption,
-                    image: (uploadFile)? uploadFile.url : originalContent.url,
-                    imageId: (uploadFile)? uploadFile.fileId : originalContent.fileId,
-                    user: {
-                        connect: {
-                            id: (parseInt(req.body.user_id)) ? parseInt(req.body.user_id) : originalContent.user_id
-                        }
-                    }
+                    image: (uploadFile)? uploadFile.url : originalContent.image,
+                    imageId: (uploadFile)? uploadFile.fileId : originalContent.imageId,
                 },
                 where: {
                     id: parseInt(req.params.contentId)

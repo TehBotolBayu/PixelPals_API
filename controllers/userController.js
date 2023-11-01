@@ -1,10 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
 module.exports = {
     createUser: async (req, res) => {
         try {
+            const uploadFile = res.locals.data
 
             const user = await prisma.users.create({
                 data: {
@@ -18,6 +18,7 @@ module.exports = {
                     username: req.body.username,
                     bio: req.body.bio,
                     picture: uploadFile.url,
+                    imageId: uploadFile.fileId,
                     user: {
                         connect: {id: user.id}
                     }
@@ -27,7 +28,8 @@ module.exports = {
             return res.status(200).json({
                 status: "created",
                 user,
-                profile
+                profile,
+                metaData: uploadFile
             })
             
         } catch (error) {
@@ -38,7 +40,7 @@ module.exports = {
         }
     },
 
-    getUserById: async (req, res) => {
+    getUserById: async (req, res, next) => {
         try {            
             const userData = await prisma.users.findUnique({
                 where: {
@@ -58,11 +60,17 @@ module.exports = {
                     user_id: userData.id 
                 }
             })
-    
-            return res.status(200).json({
-                userData,
-                profileData
-            })
+
+            if(!profileData){
+                return res.status(404).json({
+                    status: "Not Found",
+                    message: "User is not registered"
+                })
+            }
+        
+            res.locals.data = {...userData, ...profileData};
+            
+            next();
         } catch (error) {
             console.log(error.message);
             return res.status(400).json({
@@ -87,26 +95,42 @@ module.exports = {
 
     updateProfile: async (req, res) => {
         try {
-            const updatedProfile = await prisma.users.update({
+            console.log(req.body);
+
+            let uploadFile = undefined;
+            if(res.locals) uploadFile = res.locals.data;
+
+            const originalContent = await prisma.profiles.findUnique({
+                where: {
+                    user_id: parseInt(req.params.userId)
+                }
+            })
+
+            if(!originalContent) {
+                return res.status(404).json({
+                    message: "Not Found"
+                })
+            }
+
+            const updatedProfile = await prisma.profiles.update({
                 data: {
                     username: req.body.username,
                     bio: req.body.bio,
-                    picture:  `/images/${req.file.filename}`,
-                    user: {
-                        connect: {id: user.id}
-                    }
+                    picture:  (uploadFile)? uploadFile.url : originalContent.picture,
+                    imageId: (uploadFile)? uploadFile.fileId : originalContent.imageId,
                 },
                 where: {
-                    id: req.params.profileId
+                    user_id: parseInt(req.params.userId)
                 }
             })
 
             return res.status(200).json({
-                status: "updated",
-                updatedProfile
+                status: "Data berhasil diubah",
+                data: updatedProfile
             });
 
         } catch (error) {
+            console.log(error.message);
             return res.status(400).json({
                 error
             })                 
@@ -136,18 +160,29 @@ module.exports = {
         }
     },
 
-    deleteUser: async (req, res) => {
+    deleteUser: async (req, res, next) => {
         try {
+            const user = await prisma.users.findUnique({
+                where: {
+                    id: parseInt(req.params.userId)
+                }
+            })
+
+            if(!user){
+                return res.status(404).json({
+                    status: "Data not found"
+                })
+            }
+
             const deletedUser = await prisma.users.delete({
                 where: {
                     id: parseInt(req.params.userId)
                 }
             })
             
-            return res.status(200).json({
-                status: "deleted",
-                deletedUser
-            })
+            res.locals.data = deletedUser;
+
+            next();
         } catch (error) {
             return res.status(400).json({
                 error

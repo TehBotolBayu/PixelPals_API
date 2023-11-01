@@ -2,8 +2,10 @@ require('dotenv').config;
 const express = require('express'),
     app = express(),
     router = require('./routes/index'),
-    PORT = process.env.PORT || 3500;
+    PORT = process.env.PORT || 3500,
+    cors = require('cors');
 
+app.use(cors());
 app.use(express.json({ strict : false}));
 app.use('/images', express.static('public/images'));
 app.use('/api/v1', router);

@@ -2,13 +2,14 @@ const express = require('express'),
     router = express.Router(),
     userController = require('../controllers/userController'),
     storage = require('../middlewares/multer'),
-    multer = require('multer')();
+    multer = require('multer')(),
+    imageKit = require('../middlewares/imageKit');
 
-router.post('/create', multer.single('image'), userController.createUser);
+router.post('/create', multer.single('image'), imageKit.imagekitUpload, userController.createUser);
 router.get('/', userController.getUsers);
-router.get('/:userId', userController.getUserById);
-router.delete('/:userId', userController.deleteUser);
-router.put('/:userId', userController.updateProfile);
-router.put('/auth/:userId', userController.updateUser);
+router.get('/:userId', userController.getUserById, imageKit.imagekitGet);
+router.delete('/delete/:userId', userController.deleteUser, imageKit.imagekitDelete);
+router.put('/updateProfile/:userId', multer.single('image'), imageKit.imagekitUpload, userController.updateProfile);
+router.put('/updateUser/:userId', userController.updateUser);
 
-module.exports = router
+module.exports = router;

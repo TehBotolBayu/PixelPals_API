@@ -23,8 +23,9 @@ model profiles {
   username String
   bio      String
   picture  String
+  imageId String? @unique
   user_id  Int    @unique
-  user     users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user     users  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model contents {
@@ -41,7 +42,7 @@ model contents {
 }
 
 model content_tags {
-  content_id  Int
+  content_id  Int 
   content_tag Int
   content     contents @relation(fields: [content_id], references: [id])
   tag         tags     @relation(fields: [content_tag], references: [id])

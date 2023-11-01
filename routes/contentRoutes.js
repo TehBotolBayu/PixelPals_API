@@ -6,7 +6,7 @@ const express = require('express'),
     imageKit = require('../middlewares/imageKit');
 
 router.post('/create', multer.single('image'), imageKit.imagekitUpload, contentController.createContent);
-router.put('/edit/:contentId', multer.single('image'), imageKit.imagekitUpload, contentController.updateContent);
+router.put('/update/:contentId', multer.single('image'), imageKit.imagekitUpload, contentController.updateContent);
 router.get('/', contentController.getContents);
 router.get('/:contentId', contentController.getContentById, imageKit.imagekitGet);
 router.delete('/delete/:contentId', contentController.deleteContent, imageKit.imagekitDelete)
